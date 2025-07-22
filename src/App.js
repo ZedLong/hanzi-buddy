@@ -1,3 +1,15 @@
+import { auth } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { 
+  signUp, 
+  signIn, 
+  logOut, 
+  saveCard as firebaseSaveCard, 
+  getCards as firebaseGetCards, 
+  deleteCard as firebaseDeleteCard,
+  updateStreak as firebaseUpdateStreak,
+  getStreak as firebaseGetStreak
+} from './firebaseHelpers';
 import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, Star, Calendar, Award, Trophy, Users, 
@@ -111,6 +123,21 @@ const HanziBuddyApp = () => {
   const [unlockedAchievements, setUnlockedAchievements] = useState([]);
   const [showAchievement, setShowAchievement] = useState(null);
 
+// Listen for auth state changes
+useEffect(() => {
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      setUser(user);
+    } else {
+      setUser(null);
+      setFlashcards([]);
+      setStreak({ days: 0, lastDate: null });
+    }
+  });
+
+  return () => unsubscribe();
+}, []);
+
   // Load user data on auth change
   useEffect(() => {
     if (user) {
@@ -118,20 +145,21 @@ const HanziBuddyApp = () => {
     }
   }, [user]);
 
-  const loadUserData = async () => {
-    try {
-      const cards = await mockDb.getCards(user.uid);
-      setFlashcards(cards);
-      
-      const userStreak = await mockDb.getStreak(user.uid);
-      setStreak(userStreak);
-      
-      // Check for new achievements
-      checkAchievements(cards.length, userStreak.days);
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
-  };
+const loadUserData = async () => {
+  if (!user) return;
+  
+  try {
+    const cards = await firebaseGetCards(user.uid);
+    setFlashcards(cards);
+    
+    const userStreak = await firebaseGetStreak(user.uid);
+    setStreak(userStreak);
+    
+    checkAchievements(cards.length, userStreak.days);
+  } catch (error) {
+    console.error('Error loading user data:', error);
+  }
+};
 
   // Check and unlock achievements
   const checkAchievements = (cardCount, streakDays) => {
@@ -153,58 +181,65 @@ const HanziBuddyApp = () => {
   };
 
   // Update streak
-  const updateStreak = async () => {
-    const today = new Date().toDateString();
-    const yesterday = new Date(Date.now() - 86400000).toDateString();
-    
-    let newStreak = { ...streak };
-    
-    if (streak.lastDate === today) {
-      // Already practiced today
-      return;
-    } else if (streak.lastDate === yesterday) {
-      // Continuing streak
-      newStreak.days += 1;
-    } else {
-      // Starting new streak
-      newStreak.days = 1;
-    }
-    
-    newStreak.lastDate = today;
-    setStreak(newStreak);
-    
-    if (user) {
-      await mockDb.updateStreak(user.uid, newStreak);
-    }
-  };
-
+const updateStreak = async () => {
+  const today = new Date().toDateString();
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  
+  let newStreak = { ...streak };
+  
+  if (streak.lastDate === today) {
+    return;
+  } else if (streak.lastDate === yesterday) {
+    newStreak.days += 1;
+  } else {
+    newStreak.days = 1;
+  }
+  
+  newStreak.lastDate = today;
+  setStreak(newStreak);
+  
+  if (user) {
+    await firebaseUpdateStreak(user.uid, newStreak);
+  }
+};
   // Authentication handlers
-  const handleAuth = async () => {
-    if (!email || !password) {
-      alert('Please enter email and password');
-      return;
+const handleAuth = async () => {
+  if (!email || !password) {
+    alert('Please enter email and password');
+    return;
+  }
+  
+  try {
+    let user;
+    if (authMode === 'login') {
+      user = await signIn(email, password);
+    } else {
+      user = await signUp(email, password);
     }
-    
-    try {
-      if (authMode === 'login') {
-        const result = await mockAuth.signIn(email, password);
-        setUser(result.user);
-      } else {
-        const result = await mockAuth.signUp(email, password);
-        setUser(result.user);
-      }
-    } catch (error) {
-      alert('Auth error: ' + error.message);
+    setUser(user);
+  } catch (error) {
+    if (error.code === 'auth/email-already-in-use') {
+      alert('Email already in use. Please login instead.');
+    } else if (error.code === 'auth/weak-password') {
+      alert('Password should be at least 6 characters.');
+    } else if (error.code === 'auth/user-not-found') {
+      alert('No account found with this email. Please sign up.');
+    } else if (error.code === 'auth/wrong-password') {
+      alert('Incorrect password. Please try again.');
+    } else {
+      alert(error.message);
     }
-  };
-
-  const handleSignOut = async () => {
-    await mockAuth.signOut();
+  }
+};
+const handleSignOut = async () => {
+  try {
+    await logOut();
     setUser(null);
     setFlashcards([]);
-    setStreak({ days: 0, lastDate: null });
-  };
-
+  } catch (error) {
+    console.error('Sign out error:', error);
+  }
+};
   // Text-to-speech with fun voice
   const speakText = (text, isCharacter = true) => {
     if ('speechSynthesis' in window) {
@@ -220,59 +255,58 @@ const HanziBuddyApp = () => {
   };
 
   // Add characters with individual IDs
-  const addCharacters = async () => {
-    if (!textInput.trim() || !user) return;
+const addCharacters = async () => {
+  if (!textInput.trim() || !user) return;
+  
+  const chars = textInput.split('').filter(char => char.trim());
+  const newCards = [];
+  
+  for (const char of chars) {
+    if (flashcards.some(card => card.character === char)) continue;
     
-    const chars = textInput.split('').filter(char => char.trim());
-    const newCards = [];
+    const charData = characterData[char] || {
+      pinyin: '?',
+      definition: 'New character to learn!',
+      emoji: '✨'
+    };
     
-    for (const char of chars) {
-      // Skip if character already exists
-      if (flashcards.some(card => card.character === char)) continue;
-      
-      const charData = characterData[char] || {
-        pinyin: '?',
-        definition: 'New character to learn!',
-        emoji: '✨'
-      };
-      
-      const newCard = {
-        id: `${user.uid}_${Date.now()}_${Math.random()}`, // Unique ID
-        character: char,
-        ...charData,
-        dateAdded: new Date().toISOString(),
-        weekAdded: getWeekNumber(new Date()),
-        reviewCount: 0,
-        mastery: 0
-      };
-      
-      newCards.push(newCard);
-      await mockDb.saveCard(user.uid, newCard);
+    const newCard = {
+      character: char,
+      ...charData,
+      dateAdded: new Date().toISOString(),
+      weekAdded: getWeekNumber(new Date()),
+      reviewCount: 0,
+      mastery: 0
+    };
+    
+    try {
+      const savedCard = await firebaseSaveCard(user.uid, newCard);
+      newCards.push(savedCard);
+    } catch (error) {
+      console.error('Error saving card:', error);
     }
-    
-    setFlashcards(prev => [...newCards, ...prev]);
-    setTextInput('');
-    
-    // Update streak when adding new cards
-    updateStreak();
-    
-    // Check achievements
-    checkAchievements(flashcards.length + newCards.length, streak.days);
-    
-    // Fun success animation
-    if (newCards.length > 0) {
-      speakText('太棒了！', false); // "Awesome!" in Chinese
-    }
-  };
-
+  }
+  
+  setFlashcards(prev => [...newCards, ...prev]);
+  setTextInput('');
+  updateStreak();
+  checkAchievements(flashcards.length + newCards.length, streak.days);
+  
+  if (newCards.length > 0) {
+    speakText('太棒了！', false);
+  }
+};
   // Delete individual card
-  const deleteCard = async (cardId) => {
-    if (!user) return;
-    
-    await mockDb.deleteCard(user.uid, cardId);
+const deleteCard = async (cardId) => {
+  if (!user) return;
+  
+  try {
+    await firebaseDeleteCard(cardId);
     setFlashcards(prev => prev.filter(card => card.id !== cardId));
-  };
-
+  } catch (error) {
+    alert('Error deleting card. Please try again.');
+  }
+};
   // Get week number
   const getWeekNumber = (date) => {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
