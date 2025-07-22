@@ -4,7 +4,21 @@ import {
   Sparkles, Heart, Target, Clock, CheckCircle,
   User, LogOut, Trash2, Volume2, Plus, X
 } from 'lucide-react';
+// Add this near the top of your App.js, after your imports
+import { checkFirebaseStatus } from './firebase';
 
+// Add this component inside your HanziBuddyApp component
+const VercelFirebaseDebugPanel = () => {
+  // ... (use the code from the artifact)
+};
+
+// In your main return statement, add this right after the opening <div>:
+return (
+  <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100">
+    <VercelFirebaseDebugPanel />
+    {/* rest of your JSX */}
+  </div>
+);
 // Firebase configuration (you'll need to add your own config)
 const FIREBASE_CONFIG = {
   apiKey: "your-api-key",
