@@ -1010,15 +1010,25 @@ const HanziBuddyApp = () => {
               }
             </button>
           </div>
-          
-          <div className="mt-8 p-4 bg-blue-50 rounded-xl">
-            <p className="text-sm text-blue-800 text-center">
-              <strong>💡 Free to use!</strong><br/>
-              For production, connect to Firebase (free tier available)
-            </p>
+          <div className="mt-8 p-4 bg-gradient-to-r from-green-50 to-blue-50 rounded-xl border-2 border-green-200">
+            <div className="text-center">
+              <p className="text-sm font-semibold text-green-800 mb-2">
+                🇸🇬 MOE Primary Chinese Curriculum
+              </p>
+              <p className="text-xs text-gray-600 mb-2">
+                Following Singapore's 欢乐伙伴 (Huanle Huoban) textbook series<br/>
+                P1-P6 • 1,600+ characters • Aligned with MOE standards
+              </p>
+              <div className="border-t border-green-200 pt-2 mt-2">
+                <p className="text-xs text-gray-500">
+                  Created by <span className="font-semibold text-gray-700">Zed Long</span> • Full-Stack Developer
+                </p>
+              </div>
+            </div>
+          </div>
+
           </div>
         </div>
-      </div>
     );
   }
 
@@ -1048,6 +1058,10 @@ const HanziBuddyApp = () => {
                 <h1 className="text-2xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600">
                   Hanzi Buddy
                 </h1>
+                {/* ADD this new subtitle */}
+                <p className="text-xs text-gray-500 flex items-center">
+                  🇸🇬 MOE P1-P6 Curriculum • by Zed Long
+                </p>
                 <div className="flex items-center space-x-2 text-sm">
                   <span className="text-orange-500 font-bold flex items-center">
                     <Trophy size={16} className="mr-1" />
@@ -1073,7 +1087,8 @@ const HanziBuddyApp = () => {
         {currentView === 'home' && (
           <div className="space-y-6">
             {/* Stats Cards */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+              {/* Card 1 - Total Cards */}
               <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-purple-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1084,6 +1099,7 @@ const HanziBuddyApp = () => {
                 </div>
               </div>
               
+              {/* Card 2 - Streak */}
               <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-orange-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1094,6 +1110,7 @@ const HanziBuddyApp = () => {
                 </div>
               </div>
               
+              {/* Card 3 - Today */}
               <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-green-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1108,6 +1125,7 @@ const HanziBuddyApp = () => {
                 </div>
               </div>
               
+              {/* Card 4 - Badges */}
               <div className="bg-white rounded-2xl p-4 shadow-lg border-2 border-pink-200">
                 <div className="flex items-center justify-between">
                   <div>
@@ -1115,6 +1133,16 @@ const HanziBuddyApp = () => {
                     <p className="text-2xl font-bold text-pink-600">{unlockedAchievements.length}</p>
                   </div>
                   <Award className="text-pink-400" size={32} />
+                </div>
+              </div>
+              
+              {/* Card 5 - Creator Credit (NEW CARD) */}
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-2xl p-4 shadow-lg border-2 border-purple-300">
+                <div className="text-center">
+                  <div className="text-2xl mb-1">👨‍💻</div>
+                  <p className="text-xs font-medium opacity-90">Made by</p>
+                  <p className="text-sm font-bold">Zed Long</p>
+                  <p className="text-xs opacity-75">Full-Stack Dev</p>
                 </div>
               </div>
             </div>
@@ -1389,6 +1417,54 @@ const HanziBuddyApp = () => {
           </div>
         </div>
       )}
+      {/* Creator Credits Footer */}
+      <footer className="bg-gradient-to-r from-purple-600 to-pink-600 text-white mt-12">
+        <div className="max-w-4xl mx-auto px-4 py-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center md:text-left">
+            
+            {/* App Info */}
+            <div>
+              <h3 className="font-bold text-lg mb-2">Hanzi Buddy</h3>
+              <p className="text-sm opacity-90">
+                Singapore MOE-aligned Chinese learning app for Primary 1-6 students
+              </p>
+            </div>
+            
+            {/* MOE Compliance */}
+            <div>
+              <h3 className="font-bold text-lg mb-2">🇸🇬 MOE Certified</h3>
+              <p className="text-sm opacity-90">
+                Following official 欢乐伙伴 curriculum<br/>
+                1,600+ characters • P1-P6 progression<br/>
+                Aligned with Singapore education standards
+              </p>
+            </div>
+            
+            {/* Creator Credits */}
+            <div>
+              <h3 className="font-bold text-lg mb-2">👨‍💻 Developer</h3>
+              <p className="text-sm opacity-90">
+                <span className="font-semibold">Zed Long</span><br/>
+                Full-Stack Developer<br/>
+                React • Firebase • Educational Technology
+              </p>
+              <div className="mt-2">
+                <span className="text-xs opacity-75">
+                  Built with ❤️ for Singapore students
+                </span>
+              </div>
+            </div>
+            
+          </div>
+          
+          {/* Copyright */}
+          <div className="border-t border-white/20 mt-6 pt-4 text-center">
+            <p className="text-sm opacity-75">
+              © 2025 Zed Long. Educational app following Singapore MOE Primary Chinese curriculum.
+            </p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
