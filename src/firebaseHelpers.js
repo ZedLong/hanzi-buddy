@@ -66,21 +66,43 @@ export const saveCard = async (userId, cardData) => {
   }
 };
 
+// Replace your getCards function with this temporarily:
+
 export const getCards = async (userId) => {
   try {
+    console.log('📥 Loading cards for user:', userId);
+    
+    // Simplified query without orderBy to avoid index requirement
     const q = query(
       collection(db, 'cards'), 
-      where('userId', '==', userId),
-      orderBy('createdAt', 'desc')
+      where('userId', '==', userId)
     );
+    
     const querySnapshot = await getDocs(q);
+    
     const cards = [];
     querySnapshot.forEach((doc) => {
       cards.push({ id: doc.id, ...doc.data() });
     });
+    
+    // Sort in JavaScript instead of Firestore
+    cards.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    
+    console.log('✅ Cards loaded successfully:', cards.length, 'cards found');
+    console.log('✅ Cards data:', cards);
     return cards;
   } catch (error) {
-    console.error('Error getting cards:', error);
+    console.error('❌ Error loading cards:', error);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error message:', error.message);
+    
+    // If the error is because the index doesn't exist yet, return empty array
+    if (error.code === 'failed-precondition') {
+      console.log('ℹ️ Index not ready yet, returning empty array');
+      return [];
+    }
+    
+    // Don't throw error, return empty array to prevent app crash
     return [];
   }
 };
