@@ -51,17 +51,37 @@ export const logOut = async () => {
   }
 };
 
-// Card functions
+// Replace your saveCard function with this:
+
 export const saveCard = async (userId, cardData) => {
   try {
-    const docRef = await addDoc(collection(db, 'cards'), {
+    console.log('💾 Attempting to save card for user:', userId);
+    console.log('💾 Card data:', cardData);
+    
+    const cardWithMetadata = {
       ...cardData,
       userId,
-      createdAt: serverTimestamp()
-    });
-    return { ...cardData, id: docRef.id };
+      createdAt: serverTimestamp(),
+      // Keep the original dateAdded if it exists, or use current time
+      dateAdded: cardData.dateAdded || new Date().toISOString()
+    };
+    
+    const docRef = await addDoc(collection(db, 'cards'), cardWithMetadata);
+    console.log('✅ Card saved successfully with ID:', docRef.id);
+    
+    // Return the card with the actual createdAt timestamp
+    const savedCard = {
+      ...cardWithMetadata,
+      id: docRef.id,
+      createdAt: new Date().toISOString() // Use current time for immediate display
+    };
+    
+    console.log('✅ Returning saved card:', savedCard);
+    return savedCard;
   } catch (error) {
-    console.error('Error saving card:', error);
+    console.error('❌ Error saving card:', error);
+    console.error('❌ Error code:', error.code);
+    console.error('❌ Error message:', error.message);
     throw error;
   }
 };
